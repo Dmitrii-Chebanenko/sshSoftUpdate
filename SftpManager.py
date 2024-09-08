@@ -11,17 +11,16 @@ class SftpManager:
     def __init__(self, sftp: SFTPClient):
         self.__sftp = sftp
 
-    def send_sftp_file(self, filename: str, dir: str):
+    def send_sftp_file(self, filepath: str, remote: str):
         """
-        Отправка файла по sftp
-        :param filename: имя файла на отправку
-        :param dir: путь, куда нужно сохранить
+
+        :param filepath: путь до файла
+        :param remote: путь для отправки
         :return:
         """
-        sending_path = dir + '/' + filename
         try:
-            self.__sftp.put(filename, sending_path)
-            logger.info(f'Файл {filename} успешно отправлен в {sending_path}')
+            self.__sftp.put(filepath, remote)
+            logger.info(f'Файл {filepath} успешно отправлен в {remote}')
         except FileNotFoundError as e:
             logger.error(f'Файл не найден {e}')
         except Exception as e:
@@ -55,17 +54,17 @@ class SftpManager:
         except Exception as e:
             logger.error(f'Ошибка при декодировании {e}')
 
-    def send_df_sftp(self, data: pd.DataFrame, filename: str, path: str):
+    def send_df_sftp(self, data: pd.DataFrame, filepath: str, remotepath: str):
         """
 
+        :param filepath: путь до файла
+        :param remotepath: путь отправки
         :param data: таблица для отправки
-        :param filename: имя для отправки
-        :param path: путь
         :return:
         """
-        SftpManager.save_data(data, filename)
-        self.send_sftp_file(filename, path)
-        os.remove(filename)
+        SftpManager.save_data(data, filepath)
+        self.send_sftp_file(filepath, remotepath)
+        os.remove(filepath)
 
     @staticmethod
     def save_data(data: pd.DataFrame, name):
