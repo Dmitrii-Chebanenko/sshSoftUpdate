@@ -22,7 +22,7 @@ def main():
     data = sftpManager.read_csv_sftp(args.filepath)
     fileChecksumHandler = FileChecksumHandler(data, sftp)
     fileChecksumHandler.print_df(fileChecksumHandler.md5_table, sep=';')
-    sftpManager.send_df_sftp(fileChecksumHandler.md5_table, 'etalon.csv', '/home/zoola/etalon.csv')
+    sftpManager.send_df_sftp(fileChecksumHandler.md5_table, 'etalon.csv', args.filepath + '/etalon.csv')
 
 if __name__ == '__main__':
     main()
