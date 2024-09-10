@@ -3,6 +3,7 @@ import argparse
 from FileChecksumHandler import FileChecksumHandler
 from SSHConnection import SSHConnection
 from SftpManager import SftpManager
+from pathlib import PurePath
 
 def configure_args():
     args_parser = argparse.ArgumentParser(description='Подключение к VM.')
@@ -22,7 +23,7 @@ def main():
     data = sftpManager.read_csv_sftp(args.filepath)
     fileChecksumHandler = FileChecksumHandler(data, sftp)
     fileChecksumHandler.print_df(fileChecksumHandler.md5_table, sep=';')
-    sftpManager.send_df_sftp(fileChecksumHandler.md5_table, 'etalon.csv', args.filepath + '/etalon.csv')
+    sftpManager.send_df_sftp(fileChecksumHandler.md5_table, 'etalon.csv', str(PurePath(args.filepath).with_name('etalon.csv')))
 
 if __name__ == '__main__':
     main()
