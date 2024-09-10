@@ -93,5 +93,5 @@ class FileChecksumHandler:
             md5.update(arg)
             return '0x' + md5.hexdigest()
         except Exception as e:
-            logger.warning(f' Ошибка вычисления md5 {e}')
+            logger.warning(f'Ошибка вычисления md5 {e}')
             return 'NaN'
