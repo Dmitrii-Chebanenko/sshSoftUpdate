@@ -22,7 +22,7 @@ class SftpManager:
             self.__sftp.put(filepath, remote)
             logger.info(f'Файл {filepath} успешно отправлен в {remote}')
         except FileNotFoundError as e:
-            logger.error(f'Файл не найден {e}')
+            logger.error(f'Файл не найден {filepath} {e}')
         except Exception as e:
             logger.error(f'Ошибка отправки файла {e}')
 
