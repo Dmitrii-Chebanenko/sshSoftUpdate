@@ -21,10 +21,8 @@ class SshCommandExecutor:
         result = subprocess.run(ssh_command, capture_output=True, text=True)
         if result.stderr != '':
             logger.error(result.stderr)
-            return None
-        else:
-            logger.info(result.stdout)
-            return result.stdout
+        logger.info(result.stdout)
+        return result.stdout
 
     def read_file(self, path: str):
         return self.execute_remote_command(f'cat {path}')
