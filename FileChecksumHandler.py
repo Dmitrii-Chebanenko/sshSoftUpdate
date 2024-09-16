@@ -3,19 +3,17 @@ import logging
 import pandas as pd
 import sys
 
-from paramiko.sftp_client import SFTPClient
-
-from SftpManager import SftpManager
+from SSHConnection import SshCommandExecutor
 
 logger = logging.getLogger()
 
 
 class FileChecksumHandler:
 
-    def __init__(self, data: pd.DataFrame, sftp : SFTPClient):
+    def __init__(self, data: pd.DataFrame, executor: SshCommandExecutor):
         self.__data: pd.DataFrame = data
         self.__md5_table: pd.DataFrame = None
-        self.__sftp_client = sftp
+        self.__executor = executor
         self.create_md5_table()
 
     def create_md5_table(self):
@@ -27,10 +25,10 @@ class FileChecksumHandler:
         if self.__data is not None:
             res = self.__data.copy()
             arr = []
-            sftp_manager = SftpManager(self.__sftp_client)
             for i in range(res.shape[0]):
                 arr.append(
-                    FileChecksumHandler.get_md5(sftp_manager.read_bit_file(self.__data.loc[i, 'filename'])))
+                    FileChecksumHandler.get_md5(
+                        self.__executor.read_file(self.__data.loc[i, 'filename']).encode('utf-8')))
             res['crc'] = arr
             self.__md5_table = res
         else:

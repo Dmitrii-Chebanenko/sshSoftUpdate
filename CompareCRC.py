@@ -3,8 +3,7 @@ import logging
 import pandas as pd
 
 from LogerConfig import setup_logging
-from SSHConnection import SSHConnection
-from SftpManager import SftpManager
+from SSHConnection import SshCommandExecutor
 from FileChecksumHandler import FileChecksumHandler
 
 setup_logging()
@@ -49,17 +48,15 @@ def compare_with_etalon(table: pd.DataFrame, etalon: pd.DataFrame) -> pd.DataFra
 
 def main():
     args = configure_args_comp()
-    ssh_connection = SSHConnection(hostname='127.0.0.1', username=args.username, password=args.passwd)
-    sftp = ssh_connection.sftp
-    sftp_manager = SftpManager(sftp)
-    data = sftp_manager.read_csv_sftp(args.filepath)
-    table_handler = FileChecksumHandler(data, sftp)
+    command_handler = SshCommandExecutor(hostname='192.168.0.34', username=args.username, password=args.passwd)
+    data = command_handler.read_csv(args.filepath)
 
-    etalon = sftp_manager.read_csv_sftp(args.etalon)
-    etalon_handler = FileChecksumHandler(etalon, sftp)
+    file_checksum_handler = FileChecksumHandler(data, command_handler)
 
-    res = compare_with_etalon(table_handler.md5_table, etalon_handler.data)
-    FileChecksumHandler.print_df(res, ';')
+    etalon = command_handler.read_csv(args.etalon)
 
+    res = compare_with_etalon(file_checksum_handler.md5_table, etalon)
+
+    FileChecksumHandler.print_df(res, sep=';')
 if __name__ == '__main__':
     main()

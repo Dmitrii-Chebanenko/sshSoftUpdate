@@ -1,56 +1,49 @@
-import paramiko
 import logging
+import subprocess
+import pandas as pd
 
-from paramiko.client import SSHClient
-from paramiko.sftp_client import SFTPClient
+from io import StringIO
 
 logger = logging.getLogger()
 
 
-class SSHConnection:
+class SshCommandExecutor:
     def __init__(self, hostname, username, password):
         self.__hostname = hostname
         self.__username = username
         self.__password = password
-        self.__ssh = None
-        self.__sftp = None
-        self.configure()
 
-    def connect(self):
-        self.__ssh = paramiko.SSHClient()
-        self.__ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        try:
-            self.__ssh.connect(hostname=self.__hostname, username=self.__username, password=self.__password)
-            logger.debug('SSH-подключение установлено.')
-        except paramiko.AuthenticationException:
-            logger.error('Не удалось аутентифицироваться, проверьте свои учетные данные.')
-        except paramiko.SSHException as e:
-            logger.error(f'Произошла ошибка: {e}')
-
-    def open_sftp(self):
-        if self.__ssh is not None:
-            try:
-                self.__sftp = self.__ssh.open_sftp()
-                logger.debug('SFTP-соединение установлено.')
-            except Exception as e:
-                logger.warning(f'Ошибка при открытии SFTP: {e}')
+    def execute_remote_command(self, command):
+        ssh_command = [
+            'sshpass', '-p', self.__password,
+            'ssh', '-o', 'StrictHostKeyChecking=no', f'{self.__username}@{self.__hostname}', command
+        ]
+        result = subprocess.run(ssh_command, capture_output=True, text=True)
+        if result.stderr != '':
+            logger.error(result.stderr)
+            return None
         else:
-            logger.error('SSH-соединение не установлено, SFTP открыть невозможно.')
+            logger.info(result.stdout)
+            return result.stdout
 
-    def configure(self):
-        self.connect()
-        self.open_sftp()
+    def read_file(self, path: str):
+        return self.execute_remote_command(f'cat {path}')
 
-    @property
-    def ssh(self) -> SSHClient:
-        if self.__ssh is None:
-            logger.error('SSH-соединение не установлено.')
-            return None
-        return self.__ssh
+    def read_csv(self, path: str):
+        try:
+            string_csv = self.read_file(path)
 
-    @property
-    def sftp(self) -> SFTPClient:
-        if self.__sftp is None:
-            logger.error('SFTP-соединение не установлено.')
-            return None
-        return self.__sftp
+            csv_data = StringIO(string_csv)
+
+            df = pd.read_csv(csv_data, sep=';')
+
+            return df
+
+        except FileNotFoundError:
+            print(f"Ошибка: Файл по пути {path} не найден.")
+        except pd.errors.EmptyDataError:
+            print("Ошибка: Файл пуст.")
+        except pd.errors.ParserError:
+            print("Ошибка: Ошибка при разборе CSV-файла.")
+        except Exception as e:
+            print(f"Неизвестная ошибка: {e}")

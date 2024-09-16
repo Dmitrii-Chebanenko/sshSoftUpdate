@@ -1,9 +1,13 @@
 import argparse
+import logging
 
 from FileChecksumHandler import FileChecksumHandler
-from SSHConnection import SSHConnection
-from SftpManager import SftpManager
-from pathlib import PurePath
+from SSHConnection import SshCommandExecutor
+from LogerConfig import setup_logging
+
+setup_logging()
+logger = logging.getLogger()
+
 
 def configure_args():
     args_parser = argparse.ArgumentParser(description='Подключение к VM.')
@@ -15,15 +19,14 @@ def configure_args():
     args = args_parser.parse_args()
     return args
 
+
 def main():
     args = configure_args()
-    sshConnection = SSHConnection(hostname='127.0.0.1', username=args.username, password=args.passwd)
-    sftp = sshConnection.sftp
-    sftpManager = SftpManager(sftp)
-    data = sftpManager.read_csv_sftp(args.filepath)
-    fileChecksumHandler = FileChecksumHandler(data, sftp)
-    fileChecksumHandler.print_df(fileChecksumHandler.md5_table, sep=';')
-    sftpManager.send_df_sftp(fileChecksumHandler.md5_table, 'etalon.csv', str(PurePath(args.filepath).with_name('etalon.csv')))
+    command_handler = SshCommandExecutor(hostname='192.168.0.36', username=args.username, password=args.passwd)
+    df = command_handler.read_csv(args.filepath)
+    file_checksum_handler = FileChecksumHandler(df, command_handler)
+    file_checksum_handler.print_df(file_checksum_handler.md5_table, sep=';')
+
 
 if __name__ == '__main__':
     main()
